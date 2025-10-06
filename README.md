@@ -26,17 +26,13 @@ cd react-calendar-app
 
 2. Install Dependencies:
    npm install
-
-# or
-
-yarn install
+   or
+   yarn install
 
 3. Start the development server:
    npm run dev
-
-# or
-
-yarn dev
+   or
+   yarn dev
 
 ---
 

@@ -20,8 +20,8 @@ Features include adding, editing, and deleting events, all-day and timed events,
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/react-calendar-app.git
-cd react-calendar-app
+git clone https://github.com/reedthedev13/Calendar-Clone/tree/main
+cd calendar-clone
 ```
 
 2. Install Dependencies:

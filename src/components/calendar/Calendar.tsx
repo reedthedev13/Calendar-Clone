@@ -56,11 +56,9 @@ const Calendar: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // NEW: wrapper for ViewModal event clicks
   const handleViewModalEventClick = (event: CalendarEvent) => {
     setIsViewModalOpen(false); // close view modal first
 
-    // open event modal after a short delay to let close animation run
     setTimeout(() => {
       setSelectedEvent(event);
       setSelectedDate(new Date(event.date));

@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# React Calendar App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fully responsive calendar app built with React, TypeScript, and TailwindCSS.
+Features include adding, editing, and deleting events, all-day and timed events, overflow handling, and smooth animations for modals and event badges.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Add, edit, and delete calendar events.
+- All-day and timed events support.
+- Event colors (red, blue, green) with easy selection.
+- Responsive calendar grid with proper alignment.
+- Event overflow handling with "+More" button.
+- Smooth animations for event badges, modals, and hover effects.
+- Keyboard accessibility:
+  - Enter to save
+  - Escape to close modals
 
-## React Compiler
+## Installation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Clone the repository:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/yourusername/react-calendar-app.git
+cd react-calendar-app
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Install Dependencies:
+   npm install
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# or
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+yarn install
+
+3. Start the development server:
+   npm run dev
+
+# or
+
+yarn dev
+
+---
+
+## **5. Usage**
+
+```markdown
+## Usage
+
+- Click on any day cell to add a new event.
+- Click on an existing event to edit it.
+- Hover over a day cell to reveal the "+" button for quick event creation.
+- If a day has more than 4 events, click "+More" to view all events in a modal.
+- Use keyboard shortcuts:
+  - `Enter` to save an event
+  - `Escape` to close a modal
 ```
+
+## Notes
+
+- Events are stored in the browser's LocalStorage for persistence.
+- Modal open/close animations use Framer Motion for smooth transitions.
+- Currently supports three event colors, but this can be extended easily.

@@ -68,7 +68,7 @@ const DayCell: React.FC<DayCellProps> = ({
 
   return (
     <div
-      className={`group h-28 sm:h-32 md:h-36 border border-[#dadce0] relative transition-colors cursor-pointer
+      className={`group h-28 sm:h-32 md:h-36 border-[0.5px] border-[#dadce0] relative transition-colors cursor-pointer
     ${isOutOfMonth ? "bg-[#dadce0] text-[#777]" : "bg-white text-[#333]"}
     ${isPast ? "opacity-50" : ""}
     hover:bg-[#f1f3f4] flex flex-col items-center`}

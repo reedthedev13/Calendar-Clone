@@ -4,27 +4,30 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ModalWrapperProps {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: React.ReactElement<{ onClose: () => void }>;
+  zIndex?: number; // allows stacking modals
 }
 
 const ModalWrapper: React.FC<ModalWrapperProps> = ({
   isOpen,
   onClose,
   children,
+  zIndex = 50,
 }) => {
   const [show, setShow] = useState(isOpen);
 
+  // Track open/close state for animation
   useEffect(() => {
     if (isOpen) setShow(true);
   }, [isOpen]);
 
   const handleClose = () => {
     setShow(false);
-    // wait for animation to finish before calling onClose
+    // delay unmount until animation finishes
     setTimeout(() => onClose(), 300);
   };
 
-  // Escape key
+  // ESC key closes modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!show) return;
@@ -38,17 +41,18 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2"
+          className="fixed inset-0 flex items-center justify-center p-2"
+          style={{ zIndex }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          {/* Overlay */}
+          {/* Overlay (slightly transparent for stacked modals) */}
           <motion.div
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="absolute inset-0 bg-black bg-opacity-40"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 0.4 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             onClick={handleClose}
@@ -57,15 +61,12 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
           {/* Modal content */}
           <motion.div
             className="z-10 w-full max-w-lg"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {React.isValidElement(children) &&
-              React.cloneElement(children, {
-                onClose: handleClose,
-              } as any)}
+            {React.cloneElement(children, { onClose: handleClose })}
           </motion.div>
         </motion.div>
       )}

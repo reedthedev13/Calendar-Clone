@@ -22,53 +22,34 @@ const Calendar: React.FC = () => {
   const { events, addEvent, updateEvent } = useEvents();
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
-
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [selectedDayForOverflow, setSelectedDayForOverflow] =
-    useState<Date | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Navigation
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const thisMonth = () => setCurrentMonth(new Date());
 
-  // Handlers
-  const handleDayClick = (date: Date) => {
+  // Open edit modal directly
+  const openEditModal = (date: Date, event?: CalendarEvent) => {
     setSelectedDate(date);
-    setSelectedEvent(null);
-    setIsModalOpen(true);
+    setSelectedEvent(event ?? null);
+    setIsEditModalOpen(true);
   };
 
-  const handleAddClick = (date: Date) => {
+  // Open view modal
+  const openViewModal = (date: Date) => {
     setSelectedDate(date);
-    setSelectedEvent(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEventClick = (event: CalendarEvent) => {
-    setSelectedEvent(event);
-    setSelectedDate(new Date(event.date));
-    setIsModalOpen(true);
-  };
-
-  const handleViewModalEventClick = (event: CalendarEvent) => {
-    setIsViewModalOpen(false); // close view modal first
-
-    setTimeout(() => {
-      setSelectedEvent(event);
-      setSelectedDate(new Date(event.date));
-      setIsModalOpen(true);
-    }, 150);
-  };
-
-  const handleOverflowClick = (date: Date) => {
-    setSelectedDayForOverflow(date);
     setIsViewModalOpen(true);
+  };
+
+  // Handle event click from view modal
+  const handleViewModalEventClick = (event: CalendarEvent) => {
+    openEditModal(new Date(event.date), event); // edit modal opens on top
   };
 
   // Calendar grid
@@ -98,10 +79,10 @@ const Calendar: React.FC = () => {
           isToday={today}
           isOutOfMonth={outOfMonth}
           events={dayEvents}
-          onClick={handleDayClick}
-          onAddClick={handleAddClick}
-          onEventClick={handleEventClick}
-          onOverflowClick={handleOverflowClick}
+          onClick={(date) => openEditModal(date)}
+          onAddClick={(date) => openEditModal(date)}
+          onEventClick={(event) => openEditModal(new Date(event.date), event)}
+          onOverflowClick={(date) => openViewModal(date)}
         />
       );
 
@@ -155,32 +136,31 @@ const Calendar: React.FC = () => {
       {/* Days */}
       <div className="flex-1 overflow-y-auto">{rows}</div>
 
-      {/* Event Modal */}
-      {isModalOpen && selectedDate && (
-        <EventModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          selectedDate={selectedDate}
-          event={selectedEvent ?? undefined}
-          onSave={(savedEvent: CalendarEvent) => {
-            if (selectedEvent) updateEvent(savedEvent);
-            else addEvent(savedEvent);
-            setIsModalOpen(false);
-          }}
-        />
-      )}
-
-      {/* Overflow Modal */}
-      {isViewModalOpen && selectedDayForOverflow && (
+      {/* View Modal */}
+      {isViewModalOpen && selectedDate && (
         <ViewModal
-          date={selectedDayForOverflow}
+          date={selectedDate}
           events={events.filter(
             (e) =>
-              new Date(e.date).toDateString() ===
-              selectedDayForOverflow.toDateString()
+              new Date(e.date).toDateString() === selectedDate.toDateString()
           )}
           onEventClick={handleViewModalEventClick}
           onClose={() => setIsViewModalOpen(false)}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && selectedDate && (
+        <EventModal
+          isOpen={true}
+          selectedDate={selectedDate}
+          event={selectedEvent ?? undefined}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={(savedEvent) => {
+            if (selectedEvent) updateEvent(savedEvent);
+            else addEvent(savedEvent);
+            setIsEditModalOpen(false);
+          }}
         />
       )}
     </div>

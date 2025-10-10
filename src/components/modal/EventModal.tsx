@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { CalendarEvent } from "../../types/Event";
 import { useEvents } from "../../contexts/EventsContext";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import ModalWrapper from "../ModalWrapper";
+import { X } from "lucide-react";
 
 export interface EventModalProps {
   isOpen: boolean;
@@ -23,12 +24,14 @@ const EventModalContent: React.FC<
   Omit<EventModalProps, "isOpen"> & { onClose: () => void }
 > = ({ event, selectedDate, onClose }) => {
   const { addEvent, updateEvent, deleteEvent } = useEvents();
+
   const [name, setName] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [date, setDate] = useState<Date>(selectedDate);
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
   const [color, setColor] = useState<"red" | "blue" | "green">("red");
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -38,6 +41,7 @@ const EventModalContent: React.FC<
       setStartTime(event.startTime ? new Date(event.startTime) : undefined);
       setEndTime(event.endTime ? new Date(event.endTime) : undefined);
       setColor(event.color);
+      setError("");
     } else {
       setName("");
       setAllDay(false);
@@ -45,22 +49,29 @@ const EventModalContent: React.FC<
       setStartTime(undefined);
       setEndTime(undefined);
       setColor("red");
+      setError("");
     }
   }, [event, selectedDate]);
 
-  const handleSubmit = () => {
+  const validateForm = (): boolean => {
     if (!name.trim()) {
-      alert("Name is required");
-      return;
+      setError("Event name is required.");
+      return false;
     }
     if (!allDay && (!startTime || !endTime)) {
-      alert("Start and end time are required");
-      return;
+      setError("Start and end time are required for timed events.");
+      return false;
     }
     if (!allDay && startTime && endTime && startTime > endTime) {
-      alert("Start time must be before end time");
-      return;
+      setError("Start time must be before end time.");
+      return false;
     }
+    setError("");
+    return true;
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) return;
 
     const newEvent: CalendarEvent = {
       id: event?.id || crypto.randomUUID(),
@@ -83,106 +94,136 @@ const EventModalContent: React.FC<
     }
   };
 
-  // Enter key to save
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") handleSubmit();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [name, allDay, startTime, endTime, date, color]);
-
   return (
-    <div className="bg-white rounded-lg p-6 w-full max-w-full">
-      <h2 className="text-lg font-semibold mb-4">
-        {event
-          ? "Edit Event"
-          : `Add Event for ${format(selectedDate, "MMM d, yyyy")}`}
-      </h2>
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Add/Edit Event Title */}
+        <h2 className="text-2xl font-medium text-[#333]">
+          {event ? "Edit Event" : "Add Event"}
+        </h2>
 
+        {/* Date */}
+        <p className="text-base text-[#555]">
+          {format(selectedDate, "MM/dd/yy")}
+        </p>
+
+        {/* X Close Button */}
+        <button
+          onClick={onClose}
+          aria-label="Close modal"
+          className="text-gray-700 hover:text-gray-300 transition"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Form */}
       <div className="space-y-4">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Event name"
-          className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-
-        <div className="flex items-center gap-2">
-          <label>
-            <input
-              type="checkbox"
-              checked={allDay}
-              onChange={(e) => setAllDay(e.target.checked)}
-            />{" "}
-            All Day
-          </label>
+        {/* Event Name */}
+        <div>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Event name"
+            className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
+              error && !name.trim()
+                ? "border-red-500 focus:ring-red-400"
+                : "focus:ring-indigo-400"
+            }`}
+          />
+          {error && !name.trim() && (
+            <p className="text-red-500 text-xs mt-1">{error}</p>
+          )}
         </div>
 
+        {/* All Day */}
+        <div className="flex items-center gap-2 text-sm text-[#555]">
+          <input
+            type="checkbox"
+            checked={allDay}
+            onChange={(e) => setAllDay(e.target.checked)}
+            className="accent-[hsl(200,80%,50%)]"
+          />
+          <label>All Day?</label>
+        </div>
+
+        {/* Time Inputs */}
         {!allDay && (
-          <>
-            <input
-              type="time"
-              value={startTime ? format(startTime, "HH:mm") : ""}
-              onChange={(e) =>
-                setStartTime(combineDateAndTime(date, e.target.value))
-              }
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="time"
-              value={endTime ? format(endTime, "HH:mm") : ""}
-              onChange={(e) =>
-                setEndTime(combineDateAndTime(date, e.target.value))
-              }
-              className="w-full border p-2 rounded"
-            />
-          </>
+          <div className="flex gap-4">
+            <div className="flex flex-col w-1/2">
+              <label className="text-xs text-[#555] mb-1">Start Time</label>
+              <input
+                type="time"
+                value={startTime ? format(startTime, "HH:mm") : ""}
+                onChange={(e) =>
+                  setStartTime(combineDateAndTime(date, e.target.value))
+                }
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+            <div className="flex flex-col w-1/2">
+              <label className="text-xs text-[#555] mb-1">End Time</label>
+              <input
+                type="time"
+                value={endTime ? format(endTime, "HH:mm") : ""}
+                onChange={(e) =>
+                  setEndTime(combineDateAndTime(date, e.target.value))
+                }
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+          </div>
         )}
 
-        <div className="flex gap-2 mt-2">
-          {(["red", "blue", "green"] as const).map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`w-6 h-6 rounded cursor-pointer border-2 transition ${
-                color === c ? "border-black" : "border-transparent"
-              }`}
-              style={{
-                backgroundColor:
-                  c === "red"
-                    ? "hsl(0,75%,60%)"
-                    : c === "blue"
-                    ? "hsl(200,80%,50%)"
-                    : "hsl(150,80%,30%)",
-              }}
-              onClick={() => setColor(c)}
-            />
-          ))}
+        {/* Color selection */}
+        <div className="flex flex-col mt-2">
+          <span className="text-xs text-[#555] mb-2">Color</span>
+          <div className="flex gap-2">
+            {(["red", "blue", "green"] as const).map((c) => {
+              const isSelected = color === c;
+              const bgColor =
+                c === "red"
+                  ? "hsl(0,75%,60%)"
+                  : c === "blue"
+                  ? "hsl(200,80%,50%)"
+                  : "hsl(150,80%,30%)";
+
+              return (
+                <button
+                  key={c}
+                  aria-label={`Select ${c} color`}
+                  type="button"
+                  className={`w-7 h-7 rounded-md cursor-pointer transition-all duration-200 ${
+                    isSelected
+                      ? "scale-110 shadow-lg"
+                      : "filter blur-[1px] opacity-50 hover:blur-0 hover:opacity-100"
+                  }`}
+                  style={{ backgroundColor: bgColor, border: "none" }}
+                  onClick={() => setColor(c)}
+                />
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-4">
+        {/* Add/Save Button */}
+        <div className="flex justify-center mt-6">
           {event && (
             <button
               type="button"
-              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
               onClick={handleDelete}
+              className="border border-[hsl(0,75%,60%)] bg-[hsl(0,75%,95%)] text-[hsl(0,75%,10%)] px-3 py-1 rounded hover:bg-[hsl(0,75%,90%)] transition mr-3"
             >
               Delete
             </button>
           )}
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition w-11/12 max-w-[380px]"
           >
-            Save
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-          >
-            Cancel
+            {event ? "Save" : "Add"}
           </button>
         </div>
       </div>

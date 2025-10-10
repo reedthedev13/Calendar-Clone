@@ -5,7 +5,7 @@ interface ModalWrapperProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactElement<{ onClose: () => void }>;
-  zIndex?: number; // allows stacking modals
+  zIndex?: number;
 }
 
 const ModalWrapper: React.FC<ModalWrapperProps> = ({
@@ -16,14 +16,12 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
 }) => {
   const [show, setShow] = useState(isOpen);
 
-  // Track open/close state for animation
   useEffect(() => {
     if (isOpen) setShow(true);
   }, [isOpen]);
 
   const handleClose = () => {
     setShow(false);
-    // delay unmount until animation finishes
     setTimeout(() => onClose(), 300);
   };
 
@@ -41,14 +39,14 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center p-2"
+          className="fixed inset-0 flex items-center justify-center p-4"
           style={{ zIndex }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          {/* Overlay (slightly transparent for stacked modals) */}
+          {/* Overlay */}
           <motion.div
             className="absolute inset-0 bg-black bg-opacity-40"
             initial={{ opacity: 0 }}
@@ -60,10 +58,11 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
 
           {/* Modal content */}
           <motion.div
-            className="z-10 w-full max-w-lg"
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            className="relative z-10 w-full max-w-md sm:max-w-sm md:max-w-md mx-auto my-auto"
+            style={{ maxHeight: "90vh" }}
+            initial={{ opacity: 0, scale: 0.95, y: 0 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            exit={{ opacity: 0, scale: 0.95, y: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             {React.cloneElement(children, { onClose: handleClose })}

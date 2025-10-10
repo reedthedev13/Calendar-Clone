@@ -34,7 +34,7 @@ const Calendar: React.FC = () => {
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const thisMonth = () => setCurrentMonth(new Date());
 
-  // Open edit modal directly
+  // Open edit modal
   const openEditModal = (date: Date, event?: CalendarEvent) => {
     setSelectedDate(date);
     setSelectedEvent(event ?? null);
@@ -49,7 +49,7 @@ const Calendar: React.FC = () => {
 
   // Handle event click from view modal
   const handleViewModalEventClick = (event: CalendarEvent) => {
-    openEditModal(new Date(event.date), event); // edit modal opens on top
+    openEditModal(new Date(event.date), event); // stacked edit modal
   };
 
   // Calendar grid
@@ -90,7 +90,7 @@ const Calendar: React.FC = () => {
     }
 
     rows.push(
-      <div key={day.toString()} className="grid grid-cols-7">
+      <div key={day.toString()} className="grid grid-cols-7 gap-0">
         {days}
       </div>
     );
@@ -98,7 +98,7 @@ const Calendar: React.FC = () => {
   }
 
   return (
-    <div className="max-w-[1500px] mx-auto h-screen flex flex-col bg-white">
+    <div className="max-w-[1500px] mx-auto min-h-[80vh] flex flex-col bg-white p-4">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 p-3 border-b border-[#dadce0]">
         <div className="flex items-center gap-2 flex-wrap">

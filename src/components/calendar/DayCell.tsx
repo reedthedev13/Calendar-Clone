@@ -20,13 +20,14 @@ interface DayCellProps {
   onOverflowClick: (date: Date) => void;
 }
 
-const MAX_VISIBLE_EVENTS = 4;
+const MAX_VISIBLE_EVENTS = 3;
 
 const DayCell: React.FC<DayCellProps> = ({
   date,
   isToday,
   isOutOfMonth,
   events,
+  showWeekday,
   onClick,
   onAddClick,
   onEventClick,
@@ -73,7 +74,14 @@ const DayCell: React.FC<DayCellProps> = ({
     hover:bg-[#f1f3f4] flex flex-col items-center`}
       onClick={() => onClick(date)}
     >
-      {/* "+" Add button, only visible on hover */}
+      {/* Optional weekday (first row only) */}
+      {showWeekday && (
+        <div className="text-[10px] sm:text-xs md:text-sm font-medium text-[#777] mb-1">
+          {format(date, "EEE")}
+        </div>
+      )}
+
+      {/* "+" Add button */}
       <button
         className="absolute top-1 right-1 text-[10px] sm:text-xs text-gray-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:text-gray-700"
         onClick={(e) => {
@@ -120,8 +128,7 @@ const DayCell: React.FC<DayCellProps> = ({
 
         {extraCount > 0 && (
           <button
-            className="text-[11px] sm:text-xs font-bold text-black mt-1 mx-auto 
-        hover:text-gray-800 hover:scale-105 hover:shadow-sm transition-all duration-150"
+            className="text-[11px] sm:text-xs font-bold text-black mt-1 mx-auto hover:text-gray-800 hover:scale-105 hover:shadow-sm transition-all duration-150"
             onClick={(e) => {
               e.stopPropagation();
               onOverflowClick(date);

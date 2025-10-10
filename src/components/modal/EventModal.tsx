@@ -195,7 +195,7 @@ const EventModalContent: React.FC<
                   key={c}
                   aria-label={`Select ${c} color`}
                   type="button"
-                  className={`w-7 h-7 rounded-md cursor-pointer transition-all duration-200 ${
+                  className={`w-6 h-6 rounded-md cursor-pointer transition-all duration-200 ${
                     isSelected
                       ? "scale-110 shadow-lg"
                       : "filter blur-[1px] opacity-50 hover:blur-0 hover:opacity-100"
@@ -208,24 +208,34 @@ const EventModalContent: React.FC<
           </div>
         </div>
 
-        {/* Add/Save Button */}
-        <div className="flex justify-center mt-6">
-          {event && (
+        {/* Add/Save & Delete Buttons */}
+        {event ? (
+          <div className="flex justify-center mt-6 gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="flex-1 border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition"
+            >
+              Edit
+            </button>
             <button
               type="button"
               onClick={handleDelete}
-              className="border border-[hsl(0,75%,60%)] bg-[hsl(0,75%,95%)] text-[hsl(0,75%,10%)] px-3 py-1 rounded hover:bg-[hsl(0,75%,90%)] transition mr-3"
+              className="flex-1 border border-[hsl(0,75%,60%)] bg-[hsl(0,75%,95%)] text-[hsl(0,75%,10%)] px-6 py-2 rounded hover:bg-[hsl(0,75%,90%)] transition"
             >
               Delete
             </button>
-          )}
-          <button
-            onClick={handleSubmit}
-            className="border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition w-11/12 max-w-[380px]"
-          >
-            {event ? "Save" : "Add"}
-          </button>
-        </div>
+          </div>
+        ) : (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleSubmit}
+              className="border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition w-11/12 max-w-[380px]"
+            >
+              Add
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -34,22 +34,19 @@ const Calendar: React.FC = () => {
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const thisMonth = () => setCurrentMonth(new Date());
 
-  // Open edit modal
   const openEditModal = (date: Date, event?: CalendarEvent) => {
     setSelectedDate(date);
     setSelectedEvent(event ?? null);
     setIsEditModalOpen(true);
   };
 
-  // Open view modal
   const openViewModal = (date: Date) => {
     setSelectedDate(date);
     setIsViewModalOpen(true);
   };
 
-  // Handle event click from view modal
   const handleViewModalEventClick = (event: CalendarEvent) => {
-    openEditModal(new Date(event.date), event); // stacked edit modal
+    openEditModal(new Date(event.date), event);
   };
 
   // Calendar grid
@@ -72,6 +69,8 @@ const Calendar: React.FC = () => {
         (e) => new Date(e.date).toDateString() === cloneDay.toDateString()
       );
 
+      const showWeekday = day <= addDays(startDate, 6);
+
       days.push(
         <DayCell
           key={day.toString()}
@@ -79,6 +78,7 @@ const Calendar: React.FC = () => {
           isToday={today}
           isOutOfMonth={outOfMonth}
           events={dayEvents}
+          showWeekday={showWeekday}
           onClick={(date) => openEditModal(date)}
           onAddClick={(date) => openEditModal(date)}
           onEventClick={(event) => openEditModal(new Date(event.date), event)}
@@ -98,7 +98,7 @@ const Calendar: React.FC = () => {
   }
 
   return (
-    <div className="max-w-[1500px] mx-auto min-h-[80vh] flex flex-col bg-white p-4">
+    <div className="max-w-[1500px] mx-auto min-h-[80vh] flex flex-col">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 p-3 border-b border-[#dadce0]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -126,14 +126,7 @@ const Calendar: React.FC = () => {
         </div>
       </div>
 
-      {/* Weekdays */}
-      <div className="grid grid-cols-7 text-center text-[10px] sm:text-xs md:text-sm text-[#777] font-medium py-1 sm:py-2 border-b border-[#dadce0]">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day}>{day}</div>
-        ))}
-      </div>
-
-      {/* Days */}
+      {/* Calendar Days */}
       <div className="flex-1 overflow-y-auto">{rows}</div>
 
       {/* View Modal */}

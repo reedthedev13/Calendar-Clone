@@ -13,6 +13,7 @@ interface DayCellProps {
   isToday: boolean;
   isOutOfMonth: boolean;
   events: CalendarEvent[];
+  showWeekday: boolean;
   onClick: (date: Date) => void;
   onAddClick: (date: Date) => void;
   onEventClick: (event: CalendarEvent) => void;

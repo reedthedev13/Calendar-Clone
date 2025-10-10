@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import type { CalendarEvent } from "../../types/Event";
 import ModalWrapper from "../ModalWrapper";
+import { X } from "lucide-react";
 
 interface ViewModalProps {
   date: Date;
@@ -30,11 +31,22 @@ const ViewModalContent: React.FC<ViewModalProps & { onClose: () => void }> = ({
   });
 
   return (
-    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md md:max-w-lg max-h-[80vh] overflow-y-auto">
-      <h2 className="text-lg font-semibold mb-4 text-center sm:text-left">
-        Events on {date.toDateString()}
-      </h2>
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm relative max-h-[80vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-medium text-[#333]">
+          Events on {date.toLocaleDateString()}
+        </h2>
+        <button
+          onClick={onClose}
+          aria-label="Close modal"
+          className="text-gray-700 hover:text-gray-500 transition"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
+      {/* Event List */}
       <div className="flex flex-col gap-2">
         {sortedEvents.map((event) => {
           const isTimed = !event.allDay && event.startTime;
@@ -52,12 +64,10 @@ const ViewModalContent: React.FC<ViewModalProps & { onClose: () => void }> = ({
           return (
             <button
               key={event.id}
-              className={`flex items-center gap-2 px-2 py-1 rounded text-sm ${
+              className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition ${
                 event.allDay
-                  ? `${
-                      colorMap[event.color]
-                    } text-white hover:brightness-90 transition`
-                  : "hover:bg-gray-100 text-[#333] transition"
+                  ? `${colorMap[event.color]} text-white hover:brightness-90`
+                  : "hover:bg-gray-100 text-[#333]"
               }`}
               onClick={() => onEventClick(event)}
             >
@@ -74,15 +84,6 @@ const ViewModalContent: React.FC<ViewModalProps & { onClose: () => void }> = ({
             </button>
           );
         })}
-      </div>
-
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-        >
-          Close
-        </button>
       </div>
     </div>
   );

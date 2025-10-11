@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, memo } from "react";
 import type { CalendarEvent } from "../../types/Event";
 import DayCell from "./DayCell";
 
@@ -7,7 +7,7 @@ export interface CalendarGridProps {
   monthDays: Date[];
   events: CalendarEvent[];
   openEditModal: (date: Date, event?: CalendarEvent) => void;
-  openViewModal: (date: Date) => void;
+  openViewModal: (events: CalendarEvent[]) => void;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -17,21 +17,42 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   openEditModal,
   openViewModal,
 }) => {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [cellHeight, setCellHeight] = useState(144);
+
+  useEffect(() => {
+    if (!gridRef.current) return;
+
+    const updateCellHeight = () => {
+      const gridHeight = gridRef.current?.clientHeight || 0;
+      const numRows = Math.ceil(monthDays.length / 7);
+      const gap = 4;
+      const availableHeight = gridHeight - gap * (numRows - 1);
+      setCellHeight(Math.floor(availableHeight / numRows));
+    };
+
+    const observer = new ResizeObserver(updateCellHeight);
+    observer.observe(gridRef.current);
+    window.addEventListener("resize", updateCellHeight);
+    updateCellHeight();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateCellHeight);
+    };
+  }, [monthDays.length]);
+
   const rows: React.ReactNode[] = [];
   let days: React.ReactNode[] = [];
 
   monthDays.forEach((day, idx) => {
     const isOutOfMonth = day.getMonth() !== currentMonth.getMonth();
     const isToday = new Date().toDateString() === day.toDateString();
-
-    // Filter events for this day
     const dayEvents = events.filter(
       (e) => new Date(e.date).toDateString() === day.toDateString()
     );
+    const showWeekday = idx < 7;
 
-    const showWeekday = idx < 7; // Only first row shows weekdays
-
-    // Memoized handlers
     const handleClick = useCallback(
       () => openEditModal(day),
       [day, openEditModal]
@@ -41,12 +62,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       [day, openEditModal]
     );
     const handleOverflowClick = useCallback(
-      () => openViewModal(day),
-      [day, openViewModal]
+      (overflowEvents: CalendarEvent[]) => openViewModal(overflowEvents),
+      [openViewModal]
     );
     const handleEventClick = useCallback(
       (event: CalendarEvent) => openEditModal(new Date(event.date), event),
       [openEditModal]
+    );
+
+    const maxVisibleEvents = Math.max(
+      1,
+      Math.floor((cellHeight - (showWeekday ? 18 : 0) - 32) / 24)
     );
 
     days.push(
@@ -61,6 +87,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         onAddClick={handleAddClick}
         onEventClick={handleEventClick}
         onOverflowClick={handleOverflowClick}
+        style={{ height: `${cellHeight}px` }}
+        maxVisibleEvents={maxVisibleEvents}
       />
     );
 
@@ -74,14 +102,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   });
 
-  return <div className="flex-1 overflow-y-auto">{rows}</div>;
+  return (
+    <div
+      ref={gridRef}
+      className="flex-1 overflow-y-auto min-h-[200px] max-h-[80vh]"
+    >
+      {rows}
+    </div>
+  );
 };
 
-// CalendarGrid
-export default memo(
-  CalendarGrid,
-  (prevProps, nextProps) =>
-    prevProps.currentMonth.getTime() === nextProps.currentMonth.getTime() &&
-    prevProps.monthDays.length === nextProps.monthDays.length &&
-    prevProps.events.length === nextProps.events.length
-);
+export default memo(CalendarGrid);

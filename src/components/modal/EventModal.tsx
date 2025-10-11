@@ -32,7 +32,7 @@ const EventModalContent: React.FC<
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
   const [color, setColor] = useState<"red" | "blue" | "green">("red");
 
-  // Separate error states
+  // Separate error states for better UX
   const [nameError, setNameError] = useState("");
   const [timeError, setTimeError] = useState("");
 
@@ -107,7 +107,7 @@ const EventModalContent: React.FC<
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 w-full max-w-sm relative">
+    <div className="bg-white rounded-lg p-6 w-full max-w-sm relative overflow-y-auto max-h-[80vh]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-medium text-[#333]">
@@ -169,7 +169,11 @@ const EventModalContent: React.FC<
                   onChange={(e) =>
                     setStartTime(combineDateAndTime(date, e.target.value))
                   }
-                  className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+                  className={`w-full border p-2 rounded focus:ring-2 ${
+                    timeError
+                      ? "border-red-500 focus:ring-red-400"
+                      : "focus:ring-indigo-400"
+                  }`}
                 />
               </div>
               <div className="flex flex-col w-1/2">
@@ -180,7 +184,11 @@ const EventModalContent: React.FC<
                   onChange={(e) =>
                     setEndTime(combineDateAndTime(date, e.target.value))
                   }
-                  className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+                  className={`w-full border p-2 rounded focus:ring-2 ${
+                    timeError
+                      ? "border-red-500 focus:ring-red-400"
+                      : "focus:ring-indigo-400"
+                  }`}
                 />
               </div>
             </div>
@@ -220,7 +228,7 @@ const EventModalContent: React.FC<
           </div>
         </div>
 
-        {/* Add/Save & Delete Buttons */}
+        {/* Buttons */}
         {event ? (
           <div className="flex justify-center mt-6 gap-3">
             <button

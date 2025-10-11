@@ -1,6 +1,6 @@
 import React from "react";
 import type { CalendarEvent } from "../../types/Event";
-import ModalWrapper from "../ModalWrapper";
+import ModalWrapper from "./ModalWrapper";
 import { X } from "lucide-react";
 
 interface ViewModalProps {

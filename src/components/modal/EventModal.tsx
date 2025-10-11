@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CalendarEvent } from "../../types/Event";
 import { useEvents } from "../../contexts/EventsContext";
 import { format } from "date-fns";
-import ModalWrapper from "../ModalWrapper";
+import ModalWrapper from "./ModalWrapper";
 import { X } from "lucide-react";
 
 export interface EventModalProps {

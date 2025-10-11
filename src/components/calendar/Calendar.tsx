@@ -1,22 +1,10 @@
 import React, { useState } from "react";
-import { JSX } from "react";
-import {
-  addMonths,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  addDays,
-  isSameMonth,
-  isToday,
-  format,
-} from "date-fns";
-import DayCell from "./DayCell";
-import EventModal from "../modal/EventModal";
-import ViewModal from "../modal/ViewModal";
 import { useEvents } from "../../contexts/EventsContext";
 import type { CalendarEvent } from "../../types/Event";
+import CalendarHeader from "./CalendarHeader";
+import CalendarGrid from "./CalendarGrid";
+import EventModal from "../modal/EventModal";
+import ViewModal from "../modal/ViewModal";
 
 const Calendar: React.FC = () => {
   const { events, addEvent, updateEvent } = useEvents();
@@ -29,9 +17,14 @@ const Calendar: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Navigation
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const prevMonth = () =>
+    setCurrentMonth(
+      new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
+    );
+  const nextMonth = () =>
+    setCurrentMonth(
+      new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
+    );
   const thisMonth = () => setCurrentMonth(new Date());
 
   const openEditModal = (date: Date, event?: CalendarEvent) => {
@@ -49,87 +42,22 @@ const Calendar: React.FC = () => {
     openEditModal(new Date(event.date), event);
   };
 
-  // Calendar grid
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
-
-  const rows: JSX.Element[] = [];
-  let days: JSX.Element[] = [];
-  let day = startDate;
-
-  while (day <= endDate) {
-    for (let i = 0; i < 7; i++) {
-      const cloneDay = day;
-      const outOfMonth = !isSameMonth(day, monthStart);
-      const today = isToday(day);
-
-      const dayEvents = events.filter(
-        (e) => new Date(e.date).toDateString() === cloneDay.toDateString()
-      );
-
-      const showWeekday = day <= addDays(startDate, 6);
-
-      days.push(
-        <DayCell
-          key={day.toString()}
-          date={cloneDay}
-          isToday={today}
-          isOutOfMonth={outOfMonth}
-          events={dayEvents}
-          showWeekday={showWeekday}
-          onClick={(date) => openEditModal(date)}
-          onAddClick={(date) => openEditModal(date)}
-          onEventClick={(event) => openEditModal(new Date(event.date), event)}
-          onOverflowClick={(date) => openViewModal(date)}
-        />
-      );
-
-      day = addDays(day, 1);
-    }
-
-    rows.push(
-      <div key={day.toString()} className="grid grid-cols-7 gap-0">
-        {days}
-      </div>
-    );
-    days = [];
-  }
-
   return (
     <div className="max-w-[1500px] mx-auto min-h-[80vh] flex flex-col">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-2 p-3 border-b border-[#dadce0]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={thisMonth}
-            className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-          >
-            Today
-          </button>
-          <button
-            onClick={prevMonth}
-            className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-          >
-            &lt;
-          </button>
-          <button
-            onClick={nextMonth}
-            className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-          >
-            &gt;
-          </button>
-          <h2 className="ml-2 text-lg sm:text-xl font-semibold text-[#333]">
-            {format(currentMonth, "MMMM yyyy")}
-          </h2>
-        </div>
-      </div>
+      <CalendarHeader
+        currentMonth={currentMonth}
+        onPrevMonth={prevMonth}
+        onNextMonth={nextMonth}
+        onToday={thisMonth}
+      />
 
-      {/* Calendar Days */}
-      <div className="flex-1 overflow-y-auto">{rows}</div>
+      <CalendarGrid
+        currentMonth={currentMonth}
+        events={events}
+        openEditModal={openEditModal}
+        openViewModal={openViewModal}
+      />
 
-      {/* View Modal */}
       {isViewModalOpen && selectedDate && (
         <ViewModal
           date={selectedDate}
@@ -142,10 +70,9 @@ const Calendar: React.FC = () => {
         />
       )}
 
-      {/* Edit Modal */}
       {isEditModalOpen && selectedDate && (
         <EventModal
-          isOpen={true}
+          isOpen
           selectedDate={selectedDate}
           event={selectedEvent ?? undefined}
           onClose={() => setIsEditModalOpen(false)}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, memo, useCallback } from "react";
 import type { CalendarEvent } from "../../types/Event";
 import EventBadge from "./EventBadge";
 import {
@@ -46,17 +46,47 @@ const DayCell: React.FC<DayCellProps> = ({
   const todayStart = startOfDay(new Date());
   const isPast = isBefore(startOfDay(date), todayStart) && !checkIsToday(date);
 
-  const sortedEvents = sortEvents(events);
-  const allDayEvents = sortedEvents.filter((e) => e.allDay);
-  const timedEvents = sortedEvents.filter((e) => !e.allDay);
+  const sortedEvents = useMemo(() => sortEvents(events), [events]);
+  const allDayEvents = useMemo(
+    () => sortedEvents.filter((e) => e.allDay),
+    [sortedEvents]
+  );
+  const timedEvents = useMemo(
+    () => sortedEvents.filter((e) => !e.allDay),
+    [sortedEvents]
+  );
 
-  const visibleEvents = isMobile
-    ? allDayEvents.slice(0, MAX_VISIBLE_EVENTS)
-    : [...allDayEvents, ...timedEvents].slice(0, MAX_VISIBLE_EVENTS);
+  const visibleEvents = useMemo(() => {
+    return isMobile
+      ? allDayEvents.slice(0, MAX_VISIBLE_EVENTS)
+      : [...allDayEvents, ...timedEvents].slice(0, MAX_VISIBLE_EVENTS);
+  }, [allDayEvents, timedEvents, isMobile]);
 
-  const extraCount = isMobile
-    ? sortedEvents.length - visibleEvents.length
-    : sortedEvents.length - MAX_VISIBLE_EVENTS;
+  const extraCount = useMemo(() => {
+    return isMobile
+      ? sortedEvents.length - visibleEvents.length
+      : sortedEvents.length - MAX_VISIBLE_EVENTS;
+  }, [sortedEvents, visibleEvents, isMobile]);
+
+  const handleClick = useCallback(() => onClick(date), [onClick, date]);
+  const handleAddClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onAddClick(date);
+    },
+    [onAddClick, date]
+  );
+  const handleOverflowClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onOverflowClick(date);
+    },
+    [onOverflowClick, date]
+  );
+  const handleEventClick = useCallback(
+    (event: CalendarEvent) => onEventClick(event),
+    [onEventClick]
+  );
 
   return (
     <div
@@ -64,7 +94,7 @@ const DayCell: React.FC<DayCellProps> = ({
         ${isOutOfMonth ? "bg-[#dadce0] text-[#777]" : "bg-white text-[#333]"}
         ${isPast ? "opacity-50" : ""}
         hover:bg-[#f1f3f4] flex flex-col items-center`}
-      onClick={() => onClick(date)}
+      onClick={handleClick}
     >
       {showWeekday && (
         <div className="text-[10px] sm:text-xs md:text-sm font-medium text-[#777] mb-1">
@@ -74,10 +104,7 @@ const DayCell: React.FC<DayCellProps> = ({
 
       <button
         className="absolute top-1 right-1 text-[10px] sm:text-xs text-gray-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:text-gray-700"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAddClick(date);
-        }}
+        onClick={handleAddClick}
       >
         +
       </button>
@@ -107,20 +134,14 @@ const DayCell: React.FC<DayCellProps> = ({
               event.allDay ? "justify-center" : "justify-start"
             }`}
           >
-            <EventBadge
-              event={event}
-              onClick={(event) => onEventClick(event)}
-            />
+            <EventBadge event={event} onClick={handleEventClick} />
           </div>
         ))}
 
         {extraCount > 0 && (
           <button
             className="text-[11px] sm:text-xs font-bold text-black mt-1 mx-auto hover:text-gray-800 hover:scale-105 hover:shadow-sm transition-all duration-150"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOverflowClick(date);
-            }}
+            onClick={handleOverflowClick}
           >
             +{extraCount} More
           </button>
@@ -130,4 +151,13 @@ const DayCell: React.FC<DayCellProps> = ({
   );
 };
 
-export default DayCell;
+// DayCell
+export default memo(DayCell, (prev, next) => {
+  return (
+    prev.date.toDateString() === next.date.toDateString() &&
+    prev.isToday === next.isToday &&
+    prev.isOutOfMonth === next.isOutOfMonth &&
+    prev.showWeekday === next.showWeekday &&
+    prev.events === next.events
+  );
+});

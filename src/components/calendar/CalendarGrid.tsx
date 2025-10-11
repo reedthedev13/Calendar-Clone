@@ -1,7 +1,6 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import type { CalendarEvent } from "../../types/Event";
 import DayCell from "./DayCell";
-import { JSX } from "react";
 
 export interface CalendarGridProps {
   currentMonth: Date;
@@ -18,36 +17,56 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   openEditModal,
   openViewModal,
 }) => {
-  const rows: JSX.Element[] = [];
-  let days: JSX.Element[] = [];
+  const rows: React.ReactNode[] = [];
+  let days: React.ReactNode[] = [];
 
   monthDays.forEach((day, idx) => {
     const isOutOfMonth = day.getMonth() !== currentMonth.getMonth();
     const isToday = new Date().toDateString() === day.toDateString();
+
+    // Filter events for this day
     const dayEvents = events.filter(
       (e) => new Date(e.date).toDateString() === day.toDateString()
     );
 
     const showWeekday = idx < 7; // Only first row shows weekdays
 
+    // Memoized handlers
+    const handleClick = useCallback(
+      () => openEditModal(day),
+      [day, openEditModal]
+    );
+    const handleAddClick = useCallback(
+      () => openEditModal(day),
+      [day, openEditModal]
+    );
+    const handleOverflowClick = useCallback(
+      () => openViewModal(day),
+      [day, openViewModal]
+    );
+    const handleEventClick = useCallback(
+      (event: CalendarEvent) => openEditModal(new Date(event.date), event),
+      [openEditModal]
+    );
+
     days.push(
       <DayCell
-        key={day.toString()}
+        key={day.toISOString()}
         date={day}
         isToday={isToday}
         isOutOfMonth={isOutOfMonth}
         events={dayEvents}
         showWeekday={showWeekday}
-        onClick={(date) => openEditModal(date)}
-        onAddClick={(date) => openEditModal(date)}
-        onEventClick={(event) => openEditModal(new Date(event.date), event)}
-        onOverflowClick={(date) => openViewModal(date)}
+        onClick={handleClick}
+        onAddClick={handleAddClick}
+        onEventClick={handleEventClick}
+        onOverflowClick={handleOverflowClick}
       />
     );
 
     if ((idx + 1) % 7 === 0) {
       rows.push(
-        <div key={day.toString()} className="grid grid-cols-7 gap-0">
+        <div key={day.toISOString()} className="grid grid-cols-7 gap-0">
           {days}
         </div>
       );
@@ -58,4 +77,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   return <div className="flex-1 overflow-y-auto">{rows}</div>;
 };
 
-export default CalendarGrid;
+// CalendarGrid
+export default memo(
+  CalendarGrid,
+  (prevProps, nextProps) =>
+    prevProps.currentMonth.getTime() === nextProps.currentMonth.getTime() &&
+    prevProps.monthDays.length === nextProps.monthDays.length &&
+    prevProps.events.length === nextProps.events.length
+);

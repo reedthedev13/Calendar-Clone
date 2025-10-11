@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import type { CalendarEvent } from "../../types/Event";
 
 interface EventBadgeProps {
@@ -12,7 +12,7 @@ const colorMap: Record<string, string> = {
   green: "bg-[hsl(150,80%,30%)]",
 };
 
-const EventBadge: React.FC<EventBadgeProps> = ({ event, onClick }) => {
+const EventBadgeComponent: React.FC<EventBadgeProps> = ({ event, onClick }) => {
   const isTimed = !event.allDay && event.startTime;
 
   let timeLabel = "";
@@ -56,4 +56,14 @@ const EventBadge: React.FC<EventBadgeProps> = ({ event, onClick }) => {
   );
 };
 
-export default EventBadge;
+// Memoize to prevent unnecessary re-renders
+export default memo(EventBadgeComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.event.id === nextProps.event.id &&
+    prevProps.event.name === nextProps.event.name &&
+    prevProps.event.color === nextProps.event.color &&
+    prevProps.event.allDay === nextProps.event.allDay &&
+    prevProps.event.startTime === nextProps.event.startTime &&
+    prevProps.onClick === nextProps.onClick
+  );
+});

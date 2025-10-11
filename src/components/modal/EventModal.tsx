@@ -122,6 +122,7 @@ const EventModalContent: React.FC<
       <div className="space-y-4">
         {/* Event Name */}
         <div>
+          <label className="text-xs text-[#777] mb-1 block">Name</label>
           <input
             type="text"
             value={name}

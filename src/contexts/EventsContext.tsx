@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext } from "react";
 import type { CalendarEvent } from "../types/Event";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface EventsContextType {
   events: CalendarEvent[];
@@ -13,29 +14,20 @@ const EventsContext = createContext<EventsContextType | undefined>(undefined);
 export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    // Load from LocalStorage on initial render
-    const saved = localStorage.getItem("events");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Sync events to LocalStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("events", JSON.stringify(events));
-  }, [events]);
+  const [events, setEvents] = useLocalStorage<CalendarEvent[]>("events", []);
 
   const addEvent = (event: CalendarEvent) => {
-    setEvents((prev) => [...prev, event]);
+    setEvents([...events, event]);
   };
 
   const updateEvent = (updatedEvent: CalendarEvent) => {
-    setEvents((prev) =>
-      prev.map((evt) => (evt.id === updatedEvent.id ? updatedEvent : evt))
+    setEvents(
+      events.map((evt) => (evt.id === updatedEvent.id ? updatedEvent : evt))
     );
   };
 
   const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((evt) => evt.id !== id));
+    setEvents(events.filter((evt) => evt.id !== id));
   };
 
   return (

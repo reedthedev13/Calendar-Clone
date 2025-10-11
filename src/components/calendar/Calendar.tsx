@@ -5,27 +5,19 @@ import CalendarHeader from "./CalendarHeader";
 import CalendarGrid from "./CalendarGrid";
 import EventModal from "../modal/EventModal";
 import ViewModal from "../modal/ViewModal";
+import { useCalendar } from "../../hooks/useCalendar";
 
 const Calendar: React.FC = () => {
   const { events, addEvent, updateEvent } = useEvents();
+  const { currentMonth, monthDays, prevMonth, nextMonth, thisMonth } =
+    useCalendar();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  const prevMonth = () =>
-    setCurrentMonth(
-      new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
-    );
-  const nextMonth = () =>
-    setCurrentMonth(
-      new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
-    );
-  const thisMonth = () => setCurrentMonth(new Date());
 
   const openEditModal = (date: Date, event?: CalendarEvent) => {
     setSelectedDate(date);
@@ -53,6 +45,7 @@ const Calendar: React.FC = () => {
 
       <CalendarGrid
         currentMonth={currentMonth}
+        monthDays={monthDays}
         events={events}
         openEditModal={openEditModal}
         openViewModal={openViewModal}

@@ -1,11 +1,11 @@
-// CalendarGrid.tsx
 import React from "react";
-import DayCell from "./DayCell";
 import type { CalendarEvent } from "../../types/Event";
-import { getMonthDays, isSameDay } from "../../utils/dateUtils";
+import DayCell from "./DayCell";
+import { JSX } from "react";
 
-interface CalendarGridProps {
+export interface CalendarGridProps {
   currentMonth: Date;
+  monthDays: Date[];
   events: CalendarEvent[];
   openEditModal: (date: Date, event?: CalendarEvent) => void;
   openViewModal: (date: Date) => void;
@@ -13,49 +13,49 @@ interface CalendarGridProps {
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
   currentMonth,
+  monthDays,
   events,
   openEditModal,
   openViewModal,
 }) => {
-  const monthDays = getMonthDays(currentMonth);
+  const rows: JSX.Element[] = [];
+  let days: JSX.Element[] = [];
 
-  // Group into weeks (rows of 7)
-  const weeks: Date[][] = [];
-  for (let i = 0; i < monthDays.length; i += 7) {
-    weeks.push(monthDays.slice(i, i + 7));
-  }
+  monthDays.forEach((day, idx) => {
+    const isOutOfMonth = day.getMonth() !== currentMonth.getMonth();
+    const isToday = new Date().toDateString() === day.toDateString();
+    const dayEvents = events.filter(
+      (e) => new Date(e.date).toDateString() === day.toDateString()
+    );
 
-  return (
-    <div className="flex-1 overflow-y-auto">
-      {weeks.map((week, rowIndex) => (
-        <div key={rowIndex} className="grid grid-cols-7 gap-0">
-          {week.map((day) => {
-            const dayEvents = events.filter((e) =>
-              isSameDay(new Date(e.date), day)
-            );
-            const showWeekday = rowIndex === 0;
+    const showWeekday = idx < 7; // Only first row shows weekdays
 
-            return (
-              <DayCell
-                key={day.toString()}
-                date={day}
-                isToday={new Date().toDateString() === day.toDateString()}
-                isOutOfMonth={day.getMonth() !== currentMonth.getMonth()}
-                events={dayEvents}
-                showWeekday={showWeekday}
-                onClick={(date) => openEditModal(date)}
-                onAddClick={(date) => openEditModal(date)}
-                onEventClick={(event) =>
-                  openEditModal(new Date(event.date), event)
-                }
-                onOverflowClick={(date) => openViewModal(date)}
-              />
-            );
-          })}
+    days.push(
+      <DayCell
+        key={day.toString()}
+        date={day}
+        isToday={isToday}
+        isOutOfMonth={isOutOfMonth}
+        events={dayEvents}
+        showWeekday={showWeekday}
+        onClick={(date) => openEditModal(date)}
+        onAddClick={(date) => openEditModal(date)}
+        onEventClick={(event) => openEditModal(new Date(event.date), event)}
+        onOverflowClick={(date) => openViewModal(date)}
+      />
+    );
+
+    if ((idx + 1) % 7 === 0) {
+      rows.push(
+        <div key={day.toString()} className="grid grid-cols-7 gap-0">
+          {days}
         </div>
-      ))}
-    </div>
-  );
+      );
+      days = [];
+    }
+  });
+
+  return <div className="flex-1 overflow-y-auto">{rows}</div>;
 };
 
 export default CalendarGrid;

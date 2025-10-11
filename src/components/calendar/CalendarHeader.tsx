@@ -14,25 +14,19 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onNextMonth,
   onToday,
 }) => {
+  const buttonClasses =
+    "px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition";
+
   return (
     <div className="flex flex-wrap items-center gap-2 p-3 border-b border-[#dadce0]">
       <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={onToday}
-          className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-        >
+        <button onClick={onToday} className={buttonClasses}>
           Today
         </button>
-        <button
-          onClick={onPrevMonth}
-          className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-        >
+        <button onClick={onPrevMonth} className={buttonClasses}>
           &lt;
         </button>
-        <button
-          onClick={onNextMonth}
-          className="px-2 sm:px-3 py-1 text-sm border border-[#dadce0] rounded hover:bg-[#f1f3f4] transition"
-        >
+        <button onClick={onNextMonth} className={buttonClasses}>
           &gt;
         </button>
         <h2 className="ml-2 text-lg sm:text-xl font-semibold text-[#333]">

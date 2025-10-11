@@ -7,6 +7,7 @@ import {
   isBefore,
   isToday as checkIsToday,
 } from "date-fns";
+import { sortEvents } from "../../utils/sortEvents";
 
 interface DayCellProps {
   date: Date;
@@ -45,16 +46,7 @@ const DayCell: React.FC<DayCellProps> = ({
   const todayStart = startOfDay(new Date());
   const isPast = isBefore(startOfDay(date), todayStart) && !checkIsToday(date);
 
-  // Sort events: all-day first, then timed by startTime
-  const sortedEvents = [...events].sort((a, b) => {
-    if (a.allDay && !b.allDay) return -1;
-    if (!a.allDay && b.allDay) return 1;
-    if (a.startTime && b.startTime) {
-      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-    }
-    return 0;
-  });
-
+  const sortedEvents = sortEvents(events);
   const allDayEvents = sortedEvents.filter((e) => e.allDay);
   const timedEvents = sortedEvents.filter((e) => !e.allDay);
 
@@ -69,19 +61,17 @@ const DayCell: React.FC<DayCellProps> = ({
   return (
     <div
       className={`group h-28 sm:h-32 md:h-36 border-[0.5px] border-[#dadce0] relative transition-colors cursor-pointer
-    ${isOutOfMonth ? "bg-[#dadce0] text-[#777]" : "bg-white text-[#333]"}
-    ${isPast ? "opacity-50" : ""}
-    hover:bg-[#f1f3f4] flex flex-col items-center`}
+        ${isOutOfMonth ? "bg-[#dadce0] text-[#777]" : "bg-white text-[#333]"}
+        ${isPast ? "opacity-50" : ""}
+        hover:bg-[#f1f3f4] flex flex-col items-center`}
       onClick={() => onClick(date)}
     >
-      {/* Optional weekday (first row only) */}
       {showWeekday && (
         <div className="text-[10px] sm:text-xs md:text-sm font-medium text-[#777] mb-1">
           {format(date, "EEE")}
         </div>
       )}
 
-      {/* "+" Add button */}
       <button
         className="absolute top-1 right-1 text-[10px] sm:text-xs text-gray-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:text-gray-700"
         onClick={(e) => {
@@ -92,7 +82,6 @@ const DayCell: React.FC<DayCellProps> = ({
         +
       </button>
 
-      {/* Day number */}
       <div className="relative flex items-center justify-center">
         {isToday && (
           <span className="absolute w-4 h-4 rounded-full bg-[hsl(200,80%,50%)]" />
@@ -110,7 +99,6 @@ const DayCell: React.FC<DayCellProps> = ({
         </span>
       </div>
 
-      {/* Events */}
       <div className="mt-1 sm:mt-2 flex flex-col gap-0.5 sm:gap-1 w-full px-1">
         {visibleEvents.map((event) => (
           <div

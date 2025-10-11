@@ -22,7 +22,7 @@ function combineDateAndTime(date: Date, time: string): Date {
 
 const EventModalContent: React.FC<
   Omit<EventModalProps, "isOpen"> & { onClose: () => void }
-> = ({ event, selectedDate, onClose }) => {
+> = ({ event, selectedDate, onClose, onSave }) => {
   const { addEvent, updateEvent, deleteEvent } = useEvents();
 
   const [name, setName] = useState("");
@@ -31,7 +31,10 @@ const EventModalContent: React.FC<
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
   const [color, setColor] = useState<"red" | "blue" | "green">("red");
-  const [error, setError] = useState<string>("");
+
+  // Separate error states
+  const [nameError, setNameError] = useState("");
+  const [timeError, setTimeError] = useState("");
 
   useEffect(() => {
     if (event) {
@@ -41,7 +44,8 @@ const EventModalContent: React.FC<
       setStartTime(event.startTime ? new Date(event.startTime) : undefined);
       setEndTime(event.endTime ? new Date(event.endTime) : undefined);
       setColor(event.color);
-      setError("");
+      setNameError("");
+      setTimeError("");
     } else {
       setName("");
       setAllDay(false);
@@ -49,25 +53,32 @@ const EventModalContent: React.FC<
       setStartTime(undefined);
       setEndTime(undefined);
       setColor("red");
-      setError("");
+      setNameError("");
+      setTimeError("");
     }
   }, [event, selectedDate]);
 
   const validateForm = (): boolean => {
+    let valid = true;
+    setNameError("");
+    setTimeError("");
+
     if (!name.trim()) {
-      setError("Event name is required.");
-      return false;
+      setNameError("Event name is required.");
+      valid = false;
     }
-    if (!allDay && (!startTime || !endTime)) {
-      setError("Start and end time are required for timed events.");
-      return false;
+
+    if (!allDay) {
+      if (!startTime || !endTime) {
+        setTimeError("Start and end time are required for timed events.");
+        valid = false;
+      } else if (startTime.getTime() >= endTime.getTime()) {
+        setTimeError("Start time must be before end time.");
+        valid = false;
+      }
     }
-    if (!allDay && startTime && endTime && startTime > endTime) {
-      setError("Start time must be before end time.");
-      return false;
-    }
-    setError("");
-    return true;
+
+    return valid;
   };
 
   const handleSubmit = () => {
@@ -84,6 +95,7 @@ const EventModalContent: React.FC<
     };
 
     event ? updateEvent(newEvent) : addEvent(newEvent);
+    onSave(newEvent);
     onClose();
   };
 
@@ -98,17 +110,12 @@ const EventModalContent: React.FC<
     <div className="bg-white rounded-lg p-6 w-full max-w-sm relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        {/* Add/Edit Event Title */}
         <h2 className="text-2xl font-medium text-[#333]">
           {event ? "Edit Event" : "Add Event"}
         </h2>
-
-        {/* Date */}
         <p className="text-base text-[#555]">
           {format(selectedDate, "MM/dd/yy")}
         </p>
-
-        {/* X Close Button */}
         <button
           onClick={onClose}
           aria-label="Close modal"
@@ -129,13 +136,13 @@ const EventModalContent: React.FC<
             onChange={(e) => setName(e.target.value)}
             placeholder="Event name"
             className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
-              error && !name.trim()
+              nameError
                 ? "border-red-500 focus:ring-red-400"
                 : "focus:ring-indigo-400"
             }`}
           />
-          {error && !name.trim() && (
-            <p className="text-red-500 text-xs mt-1">{error}</p>
+          {nameError && (
+            <p className="text-red-500 text-xs mt-1">{nameError}</p>
           )}
         </div>
 
@@ -152,29 +159,34 @@ const EventModalContent: React.FC<
 
         {/* Time Inputs */}
         {!allDay && (
-          <div className="flex gap-4">
-            <div className="flex flex-col w-1/2">
-              <label className="text-xs text-[#555] mb-1">Start Time</label>
-              <input
-                type="time"
-                value={startTime ? format(startTime, "HH:mm") : ""}
-                onChange={(e) =>
-                  setStartTime(combineDateAndTime(date, e.target.value))
-                }
-                className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
-              />
+          <div>
+            <div className="flex gap-4">
+              <div className="flex flex-col w-1/2">
+                <label className="text-xs text-[#555] mb-1">Start Time</label>
+                <input
+                  type="time"
+                  value={startTime ? format(startTime, "HH:mm") : ""}
+                  onChange={(e) =>
+                    setStartTime(combineDateAndTime(date, e.target.value))
+                  }
+                  className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+              <div className="flex flex-col w-1/2">
+                <label className="text-xs text-[#555] mb-1">End Time</label>
+                <input
+                  type="time"
+                  value={endTime ? format(endTime, "HH:mm") : ""}
+                  onChange={(e) =>
+                    setEndTime(combineDateAndTime(date, e.target.value))
+                  }
+                  className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
             </div>
-            <div className="flex flex-col w-1/2">
-              <label className="text-xs text-[#555] mb-1">End Time</label>
-              <input
-                type="time"
-                value={endTime ? format(endTime, "HH:mm") : ""}
-                onChange={(e) =>
-                  setEndTime(combineDateAndTime(date, e.target.value))
-                }
-                className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-400"
-              />
-            </div>
+            {timeError && (
+              <p className="text-red-500 text-xs mt-1">{timeError}</p>
+            )}
           </div>
         )}
 
@@ -190,7 +202,6 @@ const EventModalContent: React.FC<
                   : c === "blue"
                   ? "hsl(200,80%,50%)"
                   : "hsl(150,80%,30%)";
-
               return (
                 <button
                   key={c}

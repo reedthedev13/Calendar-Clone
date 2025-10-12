@@ -1,34 +1,34 @@
-import React, { memo, useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, memo } from "react";
 import type { CalendarEvent } from "../../types/Event";
 import DayCell from "./DayCell";
 
 export interface CalendarGridProps {
   currentMonth: Date;
-  monthDays?: Date[];
-  events?: CalendarEvent[];
+  monthDays: Date[];
+  events: CalendarEvent[];
   openEditModal: (date: Date, event?: CalendarEvent) => void;
   openViewModal: (events: CalendarEvent[]) => void;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
   currentMonth,
-  monthDays = [],
-  events = [],
+  monthDays,
+  events,
   openEditModal,
   openViewModal,
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [cellHeight, setCellHeight] = useState(144);
 
-  // dynamic cell height
+  // Dynamic cell height
   useEffect(() => {
     if (!gridRef.current) return;
 
     const updateCellHeight = () => {
       const gridHeight = gridRef.current?.clientHeight || 0;
-      const numRows = Math.ceil(monthDays.length / 7) || 1;
-      const rowGap = 4;
-      const availableHeight = gridHeight - rowGap * (numRows - 1);
+      const numRows = Math.ceil(monthDays.length / 7);
+      const gap = 4;
+      const availableHeight = gridHeight - gap * (numRows - 1);
       setCellHeight(Math.floor(availableHeight / numRows));
     };
 
@@ -43,20 +43,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     };
   }, [monthDays.length]);
 
-  // stable event handler
-  const handleEventClick = useCallback(
-    (event: CalendarEvent) => openEditModal(new Date(event.date), event),
+  // Handlers outside loop
+  const handleEditClick = useCallback(
+    (day: Date, event?: CalendarEvent) => {
+      openEditModal(day, event);
+    },
     [openEditModal]
   );
 
-  // helper to generate handlers per day without hooks inside loop
-  const getDayHandlers = (day: Date, dayEvents: CalendarEvent[]) => {
-    return {
-      onClick: () => openEditModal(day),
-      onAddClick: () => openEditModal(day),
-      onOverflowClick: () => openViewModal(dayEvents),
-    };
-  };
+  const handleOverflowClick = useCallback(
+    (events: CalendarEvent[]) => {
+      openViewModal(events);
+    },
+    [openViewModal]
+  );
 
   const rows: React.ReactNode[] = [];
   let days: React.ReactNode[] = [];
@@ -64,15 +64,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   monthDays.forEach((day, idx) => {
     const isOutOfMonth = day.getMonth() !== currentMonth.getMonth();
     const isToday = new Date().toDateString() === day.toDateString();
-
     const dayEvents = events.filter(
       (e) => new Date(e.date).toDateString() === day.toDateString()
     );
     const showWeekday = idx < 7;
 
-    const { onClick, onAddClick, onOverflowClick } = getDayHandlers(
-      day,
-      dayEvents
+    const maxVisibleEvents = Math.max(
+      1,
+      Math.floor((cellHeight - (showWeekday ? 18 : 0) - 32) / 24)
     );
 
     days.push(
@@ -83,11 +82,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         isOutOfMonth={isOutOfMonth}
         events={dayEvents}
         showWeekday={showWeekday}
-        onClick={onClick}
-        onAddClick={onAddClick}
-        onEventClick={handleEventClick}
-        onOverflowClick={onOverflowClick}
+        onClick={() => handleEditClick(day)}
+        onAddClick={() => handleEditClick(day)}
+        onEventClick={(event) => handleEditClick(new Date(event.date), event)}
+        onOverflowClick={() => handleOverflowClick(dayEvents)}
         style={{ height: `${cellHeight}px` }}
+        maxVisibleEvents={maxVisibleEvents}
       />
     );
 
@@ -111,10 +111,4 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   );
 };
 
-export default memo(
-  CalendarGrid,
-  (prevProps, nextProps) =>
-    prevProps.currentMonth.getTime() === nextProps.currentMonth.getTime() &&
-    prevProps.monthDays?.length === nextProps.monthDays?.length &&
-    prevProps.events?.length === nextProps.events?.length
-);
+export default memo(CalendarGrid);

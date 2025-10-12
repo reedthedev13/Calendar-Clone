@@ -106,6 +106,20 @@ const EventModalContent: React.FC<
     }
   };
 
+  // ✅ Listen for Enter key press globally while modal is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSubmit();
+      } else if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSubmit, onClose]);
+
   return (
     <div className="bg-white rounded-lg p-6 w-full max-w-sm relative overflow-y-auto max-h-[80vh]">
       {/* Header */}

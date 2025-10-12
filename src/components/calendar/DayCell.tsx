@@ -20,7 +20,7 @@ interface DayCellProps {
   onEventClick: (event: CalendarEvent) => void;
   onOverflowClick: (overflowEvents: CalendarEvent[]) => void;
   style?: CSSProperties;
-  maxVisibleEvents: number;
+  maxVisibleEvents?: number;
 }
 
 const DayCell: React.FC<DayCellProps> = ({

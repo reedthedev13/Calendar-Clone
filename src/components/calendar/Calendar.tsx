@@ -18,6 +18,7 @@ const Calendar: React.FC = () => {
   );
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [viewEvents, setViewEvents] = useState<CalendarEvent[]>([]);
 
   const openEditModal = (date: Date, event?: CalendarEvent) => {
     setSelectedDate(date);
@@ -25,8 +26,21 @@ const Calendar: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  const openViewModal = (date: Date) => {
-    setSelectedDate(date);
+  const openViewModal = (data: Date | CalendarEvent[]) => {
+    let selectedEvents: CalendarEvent[] = [];
+
+    if (data instanceof Date) {
+      selectedEvents = events.filter(
+        (e) => new Date(e.date).toDateString() === data.toDateString()
+      );
+      setSelectedDate(data);
+    } else if (Array.isArray(data)) {
+      selectedEvents = data;
+      // optionally setSelectedDate to first event’s date
+      if (data.length > 0) setSelectedDate(new Date(data[0].date));
+    }
+
+    setViewEvents(selectedEvents);
     setIsViewModalOpen(true);
   };
 

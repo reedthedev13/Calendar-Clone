@@ -2,10 +2,11 @@ import React from "react";
 import type { CalendarEvent } from "../../types/Event";
 import ModalWrapper from "./ModalWrapper";
 import { X } from "lucide-react";
+import { sortEvents } from "../../utils/sortEvents"; // ✅ fixed import path
 
 interface ViewModalProps {
   date: Date;
-  events?: CalendarEvent[]; // optional to avoid crash
+  events?: CalendarEvent[];
   onClose: () => void;
   onEventClick: (event: CalendarEvent) => void;
 }
@@ -22,6 +23,8 @@ const ViewModal: React.FC<ViewModalProps> = ({
   onClose,
   onEventClick,
 }) => {
+  const sortedEvents = sortEvents(events);
+
   return (
     <ModalWrapper isOpen={events.length > 0} onClose={onClose}>
       <div className="bg-white rounded-lg p-6 w-full max-w-sm relative max-h-[80vh] overflow-y-auto">
@@ -37,11 +40,12 @@ const ViewModal: React.FC<ViewModalProps> = ({
             <X size={20} />
           </button>
         </div>
-        {events.length === 0 ? (
+
+        {sortedEvents.length === 0 ? (
           <p className="text-gray-500 text-sm">No events for this day.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {events.map((event) => {
+            {sortedEvents.map((event) => {
               const isTimed = !event.allDay && event.startTime;
               const timeLabel =
                 isTimed && event.startTime

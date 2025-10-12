@@ -32,7 +32,7 @@ const EventModalContent: React.FC<
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
   const [color, setColor] = useState<"red" | "blue" | "green">("red");
 
-  // Separate error states for better UX
+  // Separated error states
   const [nameError, setNameError] = useState("");
   const [timeError, setTimeError] = useState("");
 
@@ -106,7 +106,6 @@ const EventModalContent: React.FC<
     }
   };
 
-  // ✅ Listen for Enter key press globally while modal is open
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {

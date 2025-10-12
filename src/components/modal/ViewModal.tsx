@@ -2,7 +2,7 @@ import React from "react";
 import type { CalendarEvent } from "../../types/Event";
 import ModalWrapper from "./ModalWrapper";
 import { X } from "lucide-react";
-import { sortEvents } from "../../utils/sortEvents"; // ✅ fixed import path
+import { sortEvents } from "../../utils/sortEvents";
 
 interface ViewModalProps {
   date: Date;

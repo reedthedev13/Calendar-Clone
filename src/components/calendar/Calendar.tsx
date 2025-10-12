@@ -36,7 +36,6 @@ const Calendar: React.FC = () => {
       setSelectedDate(data);
     } else if (Array.isArray(data)) {
       selectedEvents = data;
-      // optionally setSelectedDate to first event’s date
       if (data.length > 0) setSelectedDate(new Date(data[0].date));
     }
 

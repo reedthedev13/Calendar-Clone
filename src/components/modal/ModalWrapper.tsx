@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ModalWrapperProps {
@@ -15,14 +15,22 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
   zIndex = 50,
 }) => {
   const [show, setShow] = useState(isOpen);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (isOpen) setShow(true);
+    if (isOpen) {
+      setShow(true);
+      lastFocusedElement.current = document.activeElement as HTMLElement;
+    }
   }, [isOpen]);
 
   const handleClose = () => {
     setShow(false);
-    setTimeout(() => onClose(), 300);
+    setTimeout(() => {
+      onClose();
+      lastFocusedElement.current?.focus();
+    }, 300);
   };
 
   // ESC key closes modal
@@ -30,9 +38,43 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!show) return;
       if (e.key === "Escape") handleClose();
+
+      if (e.key === "Tab" && modalRef.current) {
+        const focusableElements =
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+          );
+        const firstEl = focusableElements[0];
+        const lastEl = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstEl) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
+        }
+      }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [show]);
+
+  // Auto-focus modal on open
+  useEffect(() => {
+    if (show && modalRef.current) {
+      const firstFocusable = modalRef.current.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      firstFocusable?.focus();
+    }
   }, [show]);
 
   return (
@@ -45,6 +87,10 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          aria-describedby="modal-description"
         >
           {/* Overlay */}
           <motion.div
@@ -54,15 +100,17 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             onClick={handleClose}
+            aria-hidden="true"
           />
 
           {/* Modal content */}
           <motion.div
-            className="relative z-10 w-full max-w-md sm:max-w-sm md:max-w-md mx-auto my-auto"
+            ref={modalRef}
+            className="relative z-10 w-full max-w-md sm:max-w-sm md:max-w-md mx-auto my-auto outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             style={{ maxHeight: "90vh" }}
-            initial={{ opacity: 0, scale: 0.95, y: 0 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             {React.cloneElement(children, { onClose: handleClose })}

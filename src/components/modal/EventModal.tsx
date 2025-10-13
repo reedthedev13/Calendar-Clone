@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { CalendarEvent } from "../../types/Event";
 import { useEvents } from "../../contexts/EventsContext";
 import { format } from "date-fns";
@@ -32,9 +32,14 @@ const EventModalContent: React.FC<
   const [endTime, setEndTime] = useState<Date | undefined>(undefined);
   const [color, setColor] = useState<"red" | "blue" | "green">("red");
 
-  // Separated error states
   const [nameError, setNameError] = useState("");
   const [timeError, setTimeError] = useState("");
+
+  // Accessibility: focus on first input when modal opens
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (firstInputRef.current) firstInputRef.current.focus();
+  }, []);
 
   useEffect(() => {
     if (event) {
@@ -44,8 +49,6 @@ const EventModalContent: React.FC<
       setStartTime(event.startTime ? new Date(event.startTime) : undefined);
       setEndTime(event.endTime ? new Date(event.endTime) : undefined);
       setColor(event.color);
-      setNameError("");
-      setTimeError("");
     } else {
       setName("");
       setAllDay(false);
@@ -53,9 +56,9 @@ const EventModalContent: React.FC<
       setStartTime(undefined);
       setEndTime(undefined);
       setColor("red");
-      setNameError("");
-      setTimeError("");
     }
+    setNameError("");
+    setTimeError("");
   }, [event, selectedDate]);
 
   const validateForm = (): boolean => {
@@ -83,7 +86,6 @@ const EventModalContent: React.FC<
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-
     const newEvent: CalendarEvent = {
       id: event?.id || crypto.randomUUID(),
       name,
@@ -93,7 +95,6 @@ const EventModalContent: React.FC<
       endTime: allDay ? undefined : endTime?.toISOString(),
       color,
     };
-
     event ? updateEvent(newEvent) : addEvent(newEvent);
     onSave(newEvent);
     onClose();
@@ -106,6 +107,7 @@ const EventModalContent: React.FC<
     }
   };
 
+  // Allow Enter key to submit form
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
@@ -120,18 +122,28 @@ const EventModalContent: React.FC<
   }, [handleSubmit, onClose]);
 
   return (
-    <div className="bg-white rounded-lg p-6 w-full max-w-sm relative overflow-y-auto max-h-[80vh]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="event-modal-title"
+      aria-describedby="event-modal-description"
+      className="bg-white rounded-lg p-6 w-full max-w-sm relative overflow-y-auto max-h-[80vh]"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-medium text-[#333]">
+        <h2 id="event-modal-title" className="text-2xl font-medium text-[#333]">
           {event ? "Edit Event" : "Add Event"}
         </h2>
-        <p className="text-base text-[#555]">
+        <p
+          id="event-modal-description"
+          className="text-base text-[#555]"
+          aria-label={`Selected date: ${format(selectedDate, "MMMM dd, yyyy")}`}
+        >
           {format(selectedDate, "MM/dd/yy")}
         </p>
         <button
           onClick={onClose}
-          aria-label="Close modal"
+          aria-label="Close event modal"
           className="text-gray-700 hover:text-gray-300 transition"
         >
           <X size={20} />
@@ -139,15 +151,31 @@ const EventModalContent: React.FC<
       </div>
 
       {/* Form */}
-      <div className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="space-y-4"
+      >
         {/* Event Name */}
         <div>
-          <label className="text-xs text-[#777] mb-1 block">Name</label>
+          <label
+            htmlFor="event-name"
+            className="text-xs text-[#777] mb-1 block"
+          >
+            Name
+          </label>
           <input
+            id="event-name"
+            ref={firstInputRef}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Event name"
+            aria-required="true"
+            aria-invalid={!!nameError}
+            aria-describedby={nameError ? "name-error" : undefined}
             className={`w-full border p-2 rounded focus:outline-none focus:ring-2 ${
               nameError
                 ? "border-red-500 focus:ring-red-400"
@@ -155,33 +183,44 @@ const EventModalContent: React.FC<
             }`}
           />
           {nameError && (
-            <p className="text-red-500 text-xs mt-1">{nameError}</p>
+            <p id="name-error" className="text-red-500 text-xs mt-1">
+              {nameError}
+            </p>
           )}
         </div>
 
         {/* All Day */}
         <div className="flex items-center gap-2 text-sm text-[#555]">
           <input
+            id="all-day"
             type="checkbox"
             checked={allDay}
             onChange={(e) => setAllDay(e.target.checked)}
             className="accent-[hsl(200,80%,50%)]"
           />
-          <label>All Day?</label>
+          <label htmlFor="all-day">All Day?</label>
         </div>
 
         {/* Time Inputs */}
         {!allDay && (
-          <div>
+          <fieldset aria-describedby={timeError ? "time-error" : undefined}>
+            <legend className="sr-only">Event time range</legend>
             <div className="flex gap-4">
               <div className="flex flex-col w-1/2">
-                <label className="text-xs text-[#555] mb-1">Start Time</label>
+                <label
+                  htmlFor="start-time"
+                  className="text-xs text-[#555] mb-1"
+                >
+                  Start Time
+                </label>
                 <input
+                  id="start-time"
                   type="time"
                   value={startTime ? format(startTime, "HH:mm") : ""}
                   onChange={(e) =>
                     setStartTime(combineDateAndTime(date, e.target.value))
                   }
+                  aria-invalid={!!timeError}
                   className={`w-full border p-2 rounded focus:ring-2 ${
                     timeError
                       ? "border-red-500 focus:ring-red-400"
@@ -190,13 +229,17 @@ const EventModalContent: React.FC<
                 />
               </div>
               <div className="flex flex-col w-1/2">
-                <label className="text-xs text-[#555] mb-1">End Time</label>
+                <label htmlFor="end-time" className="text-xs text-[#555] mb-1">
+                  End Time
+                </label>
                 <input
+                  id="end-time"
                   type="time"
                   value={endTime ? format(endTime, "HH:mm") : ""}
                   onChange={(e) =>
                     setEndTime(combineDateAndTime(date, e.target.value))
                   }
+                  aria-invalid={!!timeError}
                   className={`w-full border p-2 rounded focus:ring-2 ${
                     timeError
                       ? "border-red-500 focus:ring-red-400"
@@ -206,14 +249,16 @@ const EventModalContent: React.FC<
               </div>
             </div>
             {timeError && (
-              <p className="text-red-500 text-xs mt-1">{timeError}</p>
+              <p id="time-error" className="text-red-500 text-xs mt-1">
+                {timeError}
+              </p>
             )}
-          </div>
+          </fieldset>
         )}
 
         {/* Color selection */}
-        <div className="flex flex-col mt-2">
-          <span className="text-xs text-[#555] mb-2">Color</span>
+        <fieldset>
+          <legend className="text-xs text-[#555] mb-2">Color</legend>
           <div className="flex gap-2">
             {(["red", "blue", "green"] as const).map((c) => {
               const isSelected = color === c;
@@ -226,6 +271,7 @@ const EventModalContent: React.FC<
               return (
                 <button
                   key={c}
+                  aria-pressed={isSelected}
                   aria-label={`Select ${c} color`}
                   type="button"
                   className={`w-6 h-6 rounded-md cursor-pointer transition-all duration-200 ${
@@ -239,37 +285,29 @@ const EventModalContent: React.FC<
               );
             })}
           </div>
-        </div>
+        </fieldset>
 
         {/* Buttons */}
-        {event ? (
-          <div className="flex justify-center mt-6 gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="flex-1 border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition"
-            >
-              Edit
-            </button>
+        <div className="flex justify-center mt-6 gap-3">
+          <button
+            type="submit"
+            aria-label={event ? "Save event changes" : "Add new event"}
+            className="flex-1 border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition"
+          >
+            {event ? "Edit" : "Add"}
+          </button>
+          {event && (
             <button
               type="button"
               onClick={handleDelete}
+              aria-label="Delete this event"
               className="flex-1 border border-[hsl(0,75%,60%)] bg-[hsl(0,75%,95%)] text-[hsl(0,75%,10%)] px-6 py-2 rounded hover:bg-[hsl(0,75%,90%)] transition"
             >
               Delete
             </button>
-          </div>
-        ) : (
-          <div className="flex justify-center mt-6">
-            <button
-              onClick={handleSubmit}
-              className="border border-[hsl(150,80%,30%)] bg-[hsl(150,80%,95%)] text-[hsl(150,80%,10%)] px-6 py-2 rounded hover:bg-[hsl(150,80%,90%)] transition w-11/12 max-w-[380px]"
-            >
-              Add
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </form>
     </div>
   );
 };

@@ -21,6 +21,13 @@ interface DayCellProps {
   onOverflowClick: (overflowEvents: CalendarEvent[]) => void;
   style?: CSSProperties;
   maxVisibleEvents?: number;
+
+  // Accessibility
+  tabIndex?: number;
+  onFocus?: () => void;
+  role?: string;
+  "aria-selected"?: boolean;
+  "aria-label"?: string;
 }
 
 const DayCell: React.FC<DayCellProps> = ({
@@ -35,6 +42,11 @@ const DayCell: React.FC<DayCellProps> = ({
   onOverflowClick,
   style,
   maxVisibleEvents,
+  tabIndex = 0,
+  onFocus,
+  role = "gridcell",
+  "aria-selected": ariaSelected,
+  "aria-label": ariaLabel,
 }) => {
   const sortedEvents = useMemo(() => sortEvents(events), [events]);
   const visibleEvents = sortedEvents.slice(0, maxVisibleEvents);
@@ -67,6 +79,14 @@ const DayCell: React.FC<DayCellProps> = ({
 
   return (
     <div
+      role={role}
+      tabIndex={tabIndex}
+      onFocus={onFocus}
+      aria-selected={ariaSelected}
+      aria-label={
+        ariaLabel ||
+        `${format(date, "EEEE, MMMM d")} with ${events.length} events`
+      }
       className={`group border-[0.5px] border-[#dadce0] relative overflow-hidden transition-colors cursor-pointer
       ${isOutOfMonth ? "bg-[#dadce0] text-[#777]" : "bg-white text-[#333]"}
       ${isPast ? "opacity-50" : ""}
@@ -83,13 +103,17 @@ const DayCell: React.FC<DayCellProps> = ({
       <button
         className="absolute top-1 right-1 text-[10px] sm:text-xs text-gray-500 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:text-gray-700"
         onClick={handleAddClick}
+        aria-label={`Add event on ${format(date, "MMMM d, yyyy")}`}
       >
         +
       </button>
 
       <div className="relative flex items-center justify-center">
         {isToday && (
-          <span className="absolute w-4 h-3 rounded-full bg-[hsl(200,80%,50%)]" />
+          <span
+            className="absolute w-4 h-3 rounded-full bg-[hsl(200,80%,50%)]"
+            aria-hidden="true"
+          />
         )}
         <span
           className={`z-10 text-[10px] sm:text-[11px] font-normal ${
@@ -122,6 +146,10 @@ const DayCell: React.FC<DayCellProps> = ({
           <button
             className="text-[11px] sm:text-xs font-bold text-black hover:text-gray-800 hover:scale-105 hover:shadow-sm transition-all duration-150"
             onClick={handleOverflowClick}
+            aria-label={`Show ${overflowEvents.length} more events on ${format(
+              date,
+              "MMMM d, yyyy"
+            )}`}
           >
             +{overflowEvents.length} More
           </button>

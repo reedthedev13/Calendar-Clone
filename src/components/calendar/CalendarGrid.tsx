@@ -8,6 +8,8 @@ export interface CalendarGridProps {
   events: CalendarEvent[];
   openEditModal: (date: Date, event?: CalendarEvent) => void;
   openViewModal: (events: CalendarEvent[]) => void;
+  focusedDate?: Date | null;
+  setFocusedDate?: React.Dispatch<React.SetStateAction<Date | null>>;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -19,6 +21,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [cellHeight, setCellHeight] = useState(144);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
   // Dynamic cell height
   useEffect(() => {
@@ -45,18 +48,56 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Handlers outside loop
   const handleEditClick = useCallback(
-    (day: Date, event?: CalendarEvent) => {
-      openEditModal(day, event);
-    },
+    (day: Date, event?: CalendarEvent) => openEditModal(day, event),
     [openEditModal]
   );
 
   const handleOverflowClick = useCallback(
-    (events: CalendarEvent[]) => {
-      openViewModal(events);
-    },
+    (dayEvents: CalendarEvent[]) => openViewModal(dayEvents),
     [openViewModal]
   );
+
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (focusedIndex === null) return;
+
+    let newIndex = focusedIndex;
+
+    switch (e.key) {
+      case "ArrowRight":
+        newIndex = Math.min(focusedIndex + 1, monthDays.length - 1);
+        break;
+      case "ArrowLeft":
+        newIndex = Math.max(focusedIndex - 1, 0);
+        break;
+      case "ArrowDown":
+        newIndex = Math.min(focusedIndex + 7, monthDays.length - 1);
+        break;
+      case "ArrowUp":
+        newIndex = Math.max(focusedIndex - 7, 0);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        const day = monthDays[focusedIndex];
+        const dayEvents = events.filter(
+          (ev) => new Date(ev.date).toDateString() === day.toDateString()
+        );
+        if (dayEvents.length > 0) handleOverflowClick(dayEvents);
+        else handleEditClick(day);
+        return;
+      default:
+        return;
+    }
+
+    setFocusedIndex(newIndex);
+    e.preventDefault();
+    const newDayCell =
+      gridRef.current?.querySelectorAll<HTMLElement>('[role="gridcell"]')[
+        newIndex
+      ];
+    newDayCell?.focus();
+  };
 
   const rows: React.ReactNode[] = [];
   let days: React.ReactNode[] = [];
@@ -88,12 +129,21 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         onOverflowClick={() => handleOverflowClick(dayEvents)}
         style={{ height: `${cellHeight}px` }}
         maxVisibleEvents={maxVisibleEvents}
+        tabIndex={focusedIndex === idx ? 0 : -1}
+        role="gridcell"
+        aria-selected={isToday}
+        aria-label={`${day.toDateString()} with ${dayEvents.length} events`}
+        onFocus={() => setFocusedIndex(idx)}
       />
     );
 
     if ((idx + 1) % 7 === 0) {
       rows.push(
-        <div key={day.toISOString()} className="grid grid-cols-7 gap-0">
+        <div
+          key={day.toISOString()}
+          className="grid grid-cols-7 gap-0"
+          role="row"
+        >
           {days}
         </div>
       );
@@ -105,6 +155,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     <div
       ref={gridRef}
       className="flex-1 overflow-y-auto min-h-[200px] max-h-[80vh]"
+      role="grid"
+      aria-label="Calendar"
+      onKeyDown={handleKeyDown}
     >
       {rows}
     </div>

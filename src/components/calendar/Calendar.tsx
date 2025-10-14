@@ -95,7 +95,7 @@ const Calendar: React.FC = () => {
   };
 
   return (
-    <div className="max-w-[1500px] mx-auto min-h-[80vh] flex flex-col">
+    <div className="max-w-[1300px] mx-auto min-h-[80vh] flex flex-col">
       <CalendarHeader
         currentMonth={currentMonth}
         onPrevMonth={prevMonth}

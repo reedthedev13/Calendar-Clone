@@ -172,6 +172,7 @@ const EventModalContent: React.FC<
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            autoComplete="off"
             placeholder="Event name"
             aria-required="true"
             aria-invalid={!!nameError}
